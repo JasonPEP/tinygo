@@ -21,3 +21,13 @@
 # vendor/
 /.idea/
 /tinygo.iml
+
+# Data files and databases
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Build output
+bin/
+*.exe
