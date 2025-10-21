@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: TinyGo URL Shortener API
+  version: 1.0.0
+  description: |
+    仅使用标准库与本地 JSON 文件持久化的短链接服务。
+    - 重定向路径: `GET /{code}`
+    - API 路径: `/api/*`
+servers:
+  - url: http://localhost:8080
+    description: 本地开发默认服务地址
+paths:
+  /healthz:
+    get:
+      summary: 健康检查
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: ok
+  /api/shorten:
+    post:
+      summary: 创建短链接
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShortenRequest'
+      responses:
+        '201':
+          description: 已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortenResponse'
+        '400':
+          description: 参数或格式错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 自定义 code 冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/links/{code}:
+    get:
+      summary: 获取短链详情
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '404':
+          description: 未找到
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: 删除短链
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 已删除
+        '404':
+          description: 未找到
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  '/{code}':
+    get:
+      summary: 根据短码重定向到长链接
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: 重定向到长链接
+          headers:
+            Location:
+              description: 目标长链接
+              schema:
+                type: string
+        '404':
+          description: 未找到
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ShortenRequest:
+      type: object
+      properties:
+        long_url:
+          type: string
+          format: uri
+          example: https://golang.org
+        custom_code:
+          type: string
+          description: 自定义短码（3-32位，0-9a-zA-Z_-）
+          example: my-code
+      required: [long_url]
+    ShortenResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: abc1234
+        short_url:
+          type: string
+          example: http://localhost:8080/abc1234
+        long_url:
+          type: string
+          example: https://golang.org
+      required: [code, short_url, long_url]
+    Link:
+      type: object
+      properties:
+        code:
+          type: string
+        long_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        hit_count:
+          type: integer
+          format: int64
+        last_access_at:
+          type: string
+          format: date-time
+      required: [code, long_url, created_at, updated_at]
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+
