@@ -1,0 +1,22 @@
+# TinyGo URL Shortener Configuration
+# This file supports YAML format with viper
+
+# Server configuration
+addr: ":8080"
+base_url: "http://localhost:8080"  # Used for generating short URLs
+
+# Data storage
+data_file: "data/links.json"
+
+# Short code generation
+code_length: 7
+
+# Logging configuration
+log_level: "info"    # debug, info, warn, error
+log_format: "text"   # text, json
+
+# Database configuration
+database:
+  driver: "sqlite"           # sqlite, postgres, mysql
+  dsn: "data/tinygo.db"      # database connection string
+  log_level: "warn"          # gorm log level: silent, error, warn, info
