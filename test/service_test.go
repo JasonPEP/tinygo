@@ -13,23 +13,23 @@ import (
 
 func newTempStore(t *testing.T) *storageTestAdapter {
 	t.Helper()
-	
+
 	// Use in-memory SQLite for testing
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("failed to connect database: %v", err)
 	}
-	
+
 	// Auto migrate
 	if err := db.AutoMigrate(&shortener.Link{}); err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
-	
+
 	store := storage.NewGormStore()
 	// We need to set the database connection for testing
 	// This is a bit of a hack, but works for testing
 	store.SetDB(db)
-	
+
 	return &storageTestAdapter{Store: store}
 }
 

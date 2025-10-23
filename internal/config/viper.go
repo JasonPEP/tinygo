@@ -33,6 +33,15 @@ func LoadWithViper() (Config, error) {
 	viper.SetEnvPrefix("TINYGO")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
+	
+	// Also bind common environment variables without prefix
+	viper.BindEnv("base_url", "BASE_URL")
+	viper.BindEnv("addr", "ADDR", "PORT")
+	viper.BindEnv("log_level", "LOG_LEVEL")
+	viper.BindEnv("log_format", "LOG_FORMAT")
+	viper.BindEnv("database.driver", "DATABASE_DRIVER")
+	viper.BindEnv("database.dsn", "DATABASE_DSN")
+	viper.BindEnv("database.log_level", "DATABASE_LOG_LEVEL")
 
 	// Read config file (optional)
 	if err := viper.ReadInConfig(); err != nil {
