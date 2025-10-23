@@ -34,7 +34,7 @@ jobs:
       run: go test ./...
       
     - name: Build application
-      run: go build -o bin/tinygo ./cmd/server
+      run: go build -o tinygo ./cmd/server
       
     - name: Deploy to Railway
       if: github.ref == 'refs/heads/main'

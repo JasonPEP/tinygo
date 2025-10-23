@@ -29,6 +29,7 @@ func (h *Handlers) Register(mux *stdhttp.ServeMux) {
 	mux.HandleFunc("/healthz", h.health)
 	mux.HandleFunc("/api/shorten", h.shorten)
 	mux.HandleFunc("/api/links/", h.linkDetail)
+	mux.HandleFunc("/web", h.webUI)
 	mux.HandleFunc("/", h.redirect)
 }
 
@@ -155,12 +156,18 @@ func (h *Handlers) linkDetail(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 }
 
 func (h *Handlers) redirect(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+	// Show Web UI for root path
+	if r.URL.Path == "/" {
+		h.webUI(w, r)
+		return
+	}
+	
 	// Skip reserved paths
-	if r.URL.Path == "/" ||
-		strings.HasPrefix(r.URL.Path, "/api/") ||
+	if strings.HasPrefix(r.URL.Path, "/api/") ||
 		strings.HasPrefix(r.URL.Path, "/admin/") ||
 		r.URL.Path == "/healthz" ||
-		r.URL.Path == "/readyz" {
+		r.URL.Path == "/readyz" ||
+		r.URL.Path == "/web" {
 		writeError(w, stdhttp.StatusNotFound, "not found")
 		return
 	}
