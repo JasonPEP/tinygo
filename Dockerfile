@@ -28,6 +28,9 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/tinygo .
 
+# Copy web assets
+COPY --from=builder /app/web ./web
+
 # Expose port
 EXPOSE 8080
 
