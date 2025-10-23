@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -33,10 +34,10 @@ func LoadWithViper() (Config, error) {
 	viper.SetEnvPrefix("TINYGO")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
-	
+
 	// Also bind common environment variables without prefix
 	viper.BindEnv("base_url", "BASE_URL")
-	viper.BindEnv("addr", "ADDR", "PORT")
+	viper.BindEnv("addr", "ADDR")
 	viper.BindEnv("log_level", "LOG_LEVEL")
 	viper.BindEnv("log_format", "LOG_FORMAT")
 	viper.BindEnv("database.driver", "DATABASE_DRIVER")
@@ -55,6 +56,17 @@ func LoadWithViper() (Config, error) {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return Config{}, fmt.Errorf("unmarshal config: %w", err)
+	}
+
+	// Handle PORT environment variable (Railway specific)
+	if port := os.Getenv("PORT"); port != "" && cfg.Addr == ":8080" {
+		cfg.Addr = ":" + port
+	}
+
+	// Handle DATABASE_URL environment variable (Railway specific)
+	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
+		cfg.Database.Driver = "postgres"
+		cfg.Database.DSN = databaseURL
 	}
 
 	// Validate configuration
