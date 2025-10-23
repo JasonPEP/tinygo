@@ -29,6 +29,15 @@ func (h *Handlers) Register(mux *stdhttp.ServeMux) {
 	mux.HandleFunc("/healthz", h.health)
 	mux.HandleFunc("/api/shorten", h.shorten)
 	mux.HandleFunc("/api/links/", h.linkDetail)
+	
+	// Admin routes for Web UI
+	mux.HandleFunc("/admin/shorten", h.shorten)
+	mux.HandleFunc("/admin/stats", h.stats)
+	mux.HandleFunc("/admin/links/", h.linkDetail)
+	
+	// Static files
+	mux.Handle("/static/", stdhttp.StripPrefix("/static/", stdhttp.FileServer(stdhttp.Dir("web/static/"))))
+	
 	mux.HandleFunc("/web", h.webUI)
 	mux.HandleFunc("/", h.redirect)
 }
