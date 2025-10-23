@@ -16,7 +16,7 @@ RUN go mod download
 COPY . .
 
 # Build the application with CGO enabled
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o bin/tinygo ./cmd/server
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o tinygo ./cmd/server
 
 # Final stage
 FROM alpine:latest
@@ -26,7 +26,7 @@ RUN apk --no-cache add ca-certificates tzdata sqlite
 WORKDIR /root/
 
 # Copy the binary from builder stage
-COPY --from=builder /app/bin/tinygo .
+COPY --from=builder /app/tinygo .
 
 # Expose port
 EXPOSE 8080
