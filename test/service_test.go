@@ -2,22 +2,35 @@ package test
 
 import (
 	"context"
-	"path/filepath"
 	"testing"
 
 	"tinygo/internal/shortener"
 	"tinygo/internal/storage"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func newTempStore(t *testing.T) *storageTestAdapter {
 	t.Helper()
-	dir := t.TempDir()
-	path := filepath.Join(dir, "links.json")
-	fs, err := storage.NewFileStore(path)
+	
+	// Use in-memory SQLite for testing
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
-		t.Fatalf("new filestore: %v", err)
+		t.Fatalf("failed to connect database: %v", err)
 	}
-	return &storageTestAdapter{Store: fs, Path: path}
+	
+	// Auto migrate
+	if err := db.AutoMigrate(&shortener.Link{}); err != nil {
+		t.Fatalf("failed to migrate: %v", err)
+	}
+	
+	store := storage.NewGormStore()
+	// We need to set the database connection for testing
+	// This is a bit of a hack, but works for testing
+	store.SetDB(db)
+	
+	return &storageTestAdapter{Store: store}
 }
 
 // Test basic shorten and resolve flow.
@@ -49,6 +62,6 @@ type storageTestAdapter struct {
 		Delete(ctx context.Context, code string) error
 		IncrementHit(ctx context.Context, code string) (shortener.Link, error)
 		List(ctx context.Context) ([]shortener.Link, error)
+		SetDB(db *gorm.DB)
 	}
-	Path string
 }

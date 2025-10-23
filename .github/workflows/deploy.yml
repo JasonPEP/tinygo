@@ -30,8 +30,8 @@ jobs:
     - name: Download dependencies
       run: go mod download
       
-    - name: Skip tests (temporarily)
-      run: echo "Skipping tests due to compatibility issues with PostgreSQL migration"
+    - name: Run tests
+      run: go test -v ./...
       
     - name: Build application
       run: go build -o tinygo ./cmd/server

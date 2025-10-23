@@ -22,6 +22,11 @@ func NewGormStore() *gormStore {
 	}
 }
 
+// SetDB sets the database connection (for testing)
+func (s *gormStore) SetDB(db *gorm.DB) {
+	s.db = db
+}
+
 // Create saves a new link. Returns error if code exists.
 func (s *gormStore) Create(ctx context.Context, l shortener.Link) error {
 	result := s.db.WithContext(ctx).Create(&l)
