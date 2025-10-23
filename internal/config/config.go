@@ -40,8 +40,8 @@ func Default() Config {
 		LogLevel:   "info",
 		LogFormat:  "text",
 		Database: DatabaseConfig{
-			Driver:   "sqlite",
-			DSN:      "data/tinygo.db",
+			Driver:   "postgres",
+			DSN:      "host=localhost user=postgres password=postgres dbname=tinygo port=5432 sslmode=disable",
 			LogLevel: "warn",
 		},
 	}
@@ -87,6 +87,23 @@ func Load() (Config, error) {
 	}
 	if v := os.Getenv("LOG_FORMAT"); v != "" {
 		cfg.LogFormat = v
+	}
+
+	// Database environment variables
+	if v := os.Getenv("DATABASE_DRIVER"); v != "" {
+		cfg.Database.Driver = v
+	}
+	if v := os.Getenv("DATABASE_DSN"); v != "" {
+		cfg.Database.DSN = v
+	}
+	if v := os.Getenv("DATABASE_LOG_LEVEL"); v != "" {
+		cfg.Database.LogLevel = v
+	}
+
+	// Railway PostgreSQL support
+	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
+		cfg.Database.Driver = "postgres"
+		cfg.Database.DSN = databaseURL
 	}
 
 	// Ensure data dir exists

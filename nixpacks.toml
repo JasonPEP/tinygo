@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["go"]
+
+[phases.install]
+cmds = ["go mod download"]
+
+[phases.build]
+cmds = ["CGO_ENABLED=1 go build -o bin/tinygo ./cmd/server"]
+
+[start]
+cmd = "./bin/tinygo"

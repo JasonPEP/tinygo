@@ -9,6 +9,7 @@ import (
 	"tinygo/internal/logger"
 	"tinygo/internal/shortener"
 
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -19,12 +20,7 @@ var DB *gorm.DB
 
 // Init initializes the database connection
 func Init(cfg config.DatabaseConfig) error {
-	// Ensure data directory exists
-	if dir := filepath.Dir(cfg.DSN); dir != "." && dir != "" {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return fmt.Errorf("create data directory: %w", err)
-		}
-	}
+	logger.Log.Info("initializing database", "driver", cfg.Driver, "dsn", cfg.DSN)
 
 	// Configure GORM logger
 	var gormLogLevel gormlogger.LogLevel
@@ -49,7 +45,15 @@ func Init(cfg config.DatabaseConfig) error {
 	var err error
 	switch cfg.Driver {
 	case "sqlite":
+		// Ensure data directory exists for SQLite
+		if dir := filepath.Dir(cfg.DSN); dir != "." && dir != "" {
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				return fmt.Errorf("create data directory: %w", err)
+			}
+		}
 		DB, err = gorm.Open(sqlite.Open(cfg.DSN), gormConfig)
+	case "postgres":
+		DB, err = gorm.Open(postgres.Open(cfg.DSN), gormConfig)
 	default:
 		return fmt.Errorf("unsupported database driver: %s", cfg.Driver)
 	}
