@@ -4,6 +4,8 @@ import (
 	stdhttp "net/http"
 	"time"
 
+	"tinygo/internal/auth"
+	"tinygo/internal/config"
 	"tinygo/internal/logger"
 	"tinygo/internal/shortener"
 
@@ -12,28 +14,38 @@ import (
 )
 
 // NewMux creates a new mux router with all routes and middlewares
-func NewMux(svc *shortener.Service) *mux.Router {
-	handlers := NewHandlers(svc)
+func NewMux(svc *shortener.Service, cfg config.Config) *mux.Router {
+	// Initialize authentication
+	auth.Init(cfg.Auth)
+
+	handlers := NewHandlers(svc, cfg)
 
 	// Create main router
 	r := mux.NewRouter()
 
-	// Management API routes (for admin/management)
+	// Authentication routes (public)
+	r.HandleFunc("/login", handlers.loginPage).Methods("GET")
+	r.HandleFunc("/login", handlers.login).Methods("POST")
+	r.HandleFunc("/logout", handlers.logout).Methods("POST")
+
+	// Management API routes (for admin/management) - requires authentication
 	admin := r.PathPrefix("/admin").Subrouter()
+	admin.Use(auth.RequireAuth)
 	admin.HandleFunc("/shorten", handlers.shorten).Methods("POST")
 	admin.HandleFunc("/links/{code}", handlers.linkDetail).Methods("GET", "DELETE")
 	admin.HandleFunc("/stats", handlers.stats).Methods("GET")
 
-	// Public API routes (for programmatic access)
+	// Public API routes (for programmatic access) - requires authentication
 	api := r.PathPrefix("/api").Subrouter()
+	api.Use(auth.LoginRequired)
 	api.HandleFunc("/shorten", handlers.shorten).Methods("POST")
 	api.HandleFunc("/links/{code}", handlers.linkDetail).Methods("GET", "DELETE")
 
 	// Static files
 	r.PathPrefix("/static/").Handler(stdhttp.StripPrefix("/static/", stdhttp.FileServer(stdhttp.Dir("web/static/"))))
 
-	// Web UI
-	r.HandleFunc("/", handlers.webUI).Methods("GET")
+	// Web UI - requires authentication
+	r.Handle("/", auth.RequireAuth(stdhttp.HandlerFunc(handlers.webUI))).Methods("GET")
 
 	// Health check endpoints
 	r.HandleFunc("/healthz", handlers.health).Methods("GET")

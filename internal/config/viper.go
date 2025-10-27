@@ -24,6 +24,12 @@ func LoadWithViper() (Config, error) {
 	viper.SetDefault("database.dsn", "data/tinygo.db")
 	viper.SetDefault("database.log_level", "warn")
 
+	// Authentication defaults - empty for security
+	viper.SetDefault("auth.username", "")
+	viper.SetDefault("auth.password", "")
+	viper.SetDefault("auth.session_key", "tinygo_session")
+	viper.SetDefault("auth.session_max_age", 3600)
+
 	// Set config file
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml") // 支持 yaml, json, toml

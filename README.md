@@ -14,6 +14,8 @@
 
 ## 🚀 快速开始
 
+### 本地开发
+
 ### 1. 克隆项目
 ```bash
 git clone <repository-url>
@@ -25,7 +27,20 @@ cd tinygo
 go mod tidy
 ```
 
-### 3. 运行服务
+### 3. 配置认证凭据
+**重要：** 必须设置认证凭据才能启动服务！
+
+```bash
+# 设置环境变量
+export TINYGO_AUTH_USERNAME="your_username"
+export TINYGO_AUTH_PASSWORD="your_secure_password"
+
+# 或者复制示例文件并编辑
+cp env.example .env
+# 编辑 .env 文件设置你的凭据
+```
+
+### 4. 运行服务
 ```bash
 go run ./cmd/server
 ```
@@ -36,9 +51,24 @@ go build -o bin/urlshort ./cmd/server
 ./bin/urlshort
 ```
 
-### 4. 访问服务
+### 5. 访问服务
 - **Web UI**: http://localhost:8080/
 - **API 文档**: 见下方 API 接口说明
+
+### Railway 部署
+
+**一键部署到 Railway：**
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/your-template-id)
+
+**手动部署：**
+1. 安装 Railway CLI: `npm install -g @railway/cli`
+2. 登录: `railway login`
+3. 初始化项目: `railway init`
+4. 设置环境变量（见下方环境变量说明）
+5. 部署: `railway up`
+
+**详细部署说明请查看 [DEPLOYMENT.md](DEPLOYMENT.md)**
 
 ## 📁 项目结构
 
@@ -87,6 +117,27 @@ log_format: "text"
 export TINYGO_ADDR=":9090"
 export TINYGO_DATABASE_DSN="data/prod.db"
 export TINYGO_LOG_LEVEL="debug"
+```
+
+## 🔐 安全说明
+
+**重要安全提醒：**
+
+1. **认证凭据**：默认配置文件中不包含任何硬编码的用户名和密码
+2. **环境变量**：必须通过环境变量设置认证凭据
+3. **生产环境**：建议使用强密码和定期更换
+4. **HTTPS**：生产环境建议使用 HTTPS 保护传输安全
+5. **会话安全**：会话 cookie 使用 HttpOnly 和 SameSite 保护
+
+**环境变量设置：**
+```bash
+# 开发环境
+export TINYGO_AUTH_USERNAME="admin"
+export TINYGO_AUTH_PASSWORD="your_secure_password"
+
+# 生产环境建议使用强密码
+export TINYGO_AUTH_USERNAME="admin"
+export TINYGO_AUTH_PASSWORD="$(openssl rand -base64 32)"
 ```
 
 ## 🔌 API 接口

@@ -32,7 +32,22 @@
             background: #2c3e50;
             color: white;
             padding: 30px;
-            text-align: center;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header-left {
+            text-align: left;
+        }
+        
+        .header-right {
+            text-align: right;
         }
         
         .header h1 {
@@ -43,6 +58,17 @@
         .header p {
             opacity: 0.8;
             font-size: 1.1em;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
         
         .content {
@@ -190,8 +216,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔗 TinyGo 短链接管理</h1>
-            <p>简洁、高效的短链接服务</p>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🔗 TinyGo 短链接管理</h1>
+                    <p>简洁、高效的短链接服务</p>
+                </div>
+                <div class="header-right">
+                    <form method="POST" action="/logout" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary">登出</button>
+                    </form>
+                </div>
+            </div>
         </div>
         
         <div class="content">

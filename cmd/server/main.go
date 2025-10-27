@@ -39,7 +39,7 @@ func main() {
 	store := storage.NewGormStore()
 
 	svc := shortener.NewService(store, cfg.BaseURL, cfg.CodeLength)
-	router := httphandler.NewMux(svc)
+	router := httphandler.NewMux(svc, cfg)
 
 	srv := &http.Server{
 		Addr:         cfg.Addr,

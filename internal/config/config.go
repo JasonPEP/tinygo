@@ -21,6 +21,9 @@ type Config struct {
 
 	// Database configuration
 	Database DatabaseConfig `json:"database" yaml:"database" mapstructure:"database"`
+
+	// Authentication configuration
+	Auth AuthConfig `json:"auth" yaml:"auth" mapstructure:"auth"`
 }
 
 // DatabaseConfig holds database configuration
@@ -28,6 +31,14 @@ type DatabaseConfig struct {
 	Driver   string `json:"driver" yaml:"driver" mapstructure:"driver"`
 	DSN      string `json:"dsn" yaml:"dsn" mapstructure:"dsn"`
 	LogLevel string `json:"log_level" yaml:"log_level" mapstructure:"log_level"`
+}
+
+// AuthConfig holds authentication configuration
+type AuthConfig struct {
+	Username      string `json:"username" yaml:"username" mapstructure:"username"`
+	Password      string `json:"password" yaml:"password" mapstructure:"password"`
+	SessionKey    string `json:"session_key" yaml:"session_key" mapstructure:"session_key"`
+	SessionMaxAge int    `json:"session_max_age" yaml:"session_max_age" mapstructure:"session_max_age"`
 }
 
 // Default returns sane defaults for local development.
@@ -40,9 +51,15 @@ func Default() Config {
 		LogLevel:   "info",
 		LogFormat:  "text",
 		Database: DatabaseConfig{
-			Driver:   "postgres",
-			DSN:      "host=localhost user=postgres password=postgres dbname=tinygo port=5432 sslmode=disable",
+			Driver:   "sqlite",
+			DSN:      "data/tinygo.db",
 			LogLevel: "warn",
+		},
+		Auth: AuthConfig{
+			Username:      "",
+			Password:      "",
+			SessionKey:    "tinygo_session",
+			SessionMaxAge: 3600, // 1 hour
 		},
 	}
 }
@@ -159,6 +176,20 @@ func (c *Config) Validate() error {
 	}
 	if !validLogFormats[c.LogFormat] {
 		return fmt.Errorf("invalid log_format: %s", c.LogFormat)
+	}
+
+	// Validate authentication configuration
+	if c.Auth.Username == "" {
+		return fmt.Errorf("auth.username is required - set TINYGO_AUTH_USERNAME environment variable")
+	}
+	if c.Auth.Password == "" {
+		return fmt.Errorf("auth.password is required - set TINYGO_AUTH_PASSWORD environment variable")
+	}
+	if c.Auth.SessionKey == "" {
+		return fmt.Errorf("auth.session_key cannot be empty")
+	}
+	if c.Auth.SessionMaxAge <= 0 {
+		return fmt.Errorf("auth.session_max_age must be positive")
 	}
 
 	return nil

@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"tinygo/internal/auth"
+	"tinygo/internal/config"
 	"tinygo/internal/logger"
 	"tinygo/internal/shortener"
 	"tinygo/internal/storage"
@@ -18,10 +20,11 @@ import (
 
 type Handlers struct {
 	svc *shortener.Service
+	cfg config.Config
 }
 
-func NewHandlers(svc *shortener.Service) *Handlers {
-	return &Handlers{svc: svc}
+func NewHandlers(svc *shortener.Service, cfg config.Config) *Handlers {
+	return &Handlers{svc: svc, cfg: cfg}
 }
 
 // Register registers routes on the given mux.
@@ -29,15 +32,15 @@ func (h *Handlers) Register(mux *stdhttp.ServeMux) {
 	mux.HandleFunc("/healthz", h.health)
 	mux.HandleFunc("/api/shorten", h.shorten)
 	mux.HandleFunc("/api/links/", h.linkDetail)
-	
+
 	// Admin routes for Web UI
 	mux.HandleFunc("/admin/shorten", h.shorten)
 	mux.HandleFunc("/admin/stats", h.stats)
 	mux.HandleFunc("/admin/links/", h.linkDetail)
-	
+
 	// Static files
 	mux.Handle("/static/", stdhttp.StripPrefix("/static/", stdhttp.FileServer(stdhttp.Dir("web/static/"))))
-	
+
 	mux.HandleFunc("/web", h.webUI)
 	mux.HandleFunc("/", h.redirect)
 }
@@ -90,6 +93,63 @@ func (h *Handlers) webUI(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(stdhttp.StatusOK)
 	w.Write(content)
+}
+
+func (h *Handlers) loginPage(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+	// Serve the login page
+	htmlPath := filepath.Join("web", "templates", "login.html")
+	content, err := os.ReadFile(htmlPath)
+	if err != nil {
+		writeError(w, stdhttp.StatusInternalServerError, "login template not found")
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(stdhttp.StatusOK)
+	w.Write(content)
+}
+
+func (h *Handlers) login(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+	if r.Method != stdhttp.MethodPost {
+		writeError(w, stdhttp.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	// Parse form data
+	if err := r.ParseForm(); err != nil {
+		writeError(w, stdhttp.StatusBadRequest, "invalid form data")
+		return
+	}
+
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	// Check credentials
+	if username == h.cfg.Auth.Username && password == h.cfg.Auth.Password {
+		// Set authenticated session
+		if err := auth.SetAuthenticated(w, r, true); err != nil {
+			logger.Log.Errorf("set authenticated session: %v", err)
+			writeError(w, stdhttp.StatusInternalServerError, "login failed")
+			return
+		}
+
+		// Redirect to main page
+		stdhttp.Redirect(w, r, "/", stdhttp.StatusSeeOther)
+		return
+	}
+
+	// Invalid credentials
+	writeError(w, stdhttp.StatusUnauthorized, "invalid username or password")
+}
+
+func (h *Handlers) logout(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+	// Clear authenticated session
+	if err := auth.SetAuthenticated(w, r, false); err != nil {
+		logger.Log.Errorf("clear authenticated session: %v", err)
+	}
+
+	// Redirect to login page
+	stdhttp.Redirect(w, r, "/login", stdhttp.StatusSeeOther)
 }
 
 type shortenRequest struct {
@@ -170,7 +230,7 @@ func (h *Handlers) redirect(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		h.webUI(w, r)
 		return
 	}
-	
+
 	// Skip reserved paths
 	if strings.HasPrefix(r.URL.Path, "/api/") ||
 		strings.HasPrefix(r.URL.Path, "/admin/") ||

@@ -1,179 +1,164 @@
-# TinyGo 部署到 Railway 指南
+# 🚀 Railway 部署指南
 
-本项目已从 SQLite 迁移到 PostgreSQL，并配置了完整的 Railway 部署方案。
+本指南将帮助你将 TinyGo 短链接服务部署到 Railway 平台。
 
-## 项目变更
+## 📋 部署前准备
 
-### 数据库迁移
-- ✅ 从 SQLite 迁移到 PostgreSQL
-- ✅ 添加了 PostgreSQL 驱动支持
-- ✅ 配置了环境变量支持（Railway 自动提供 `DATABASE_URL`）
-- ✅ 保持了 SQLite 作为本地开发选项
-
-### 部署配置
-- ✅ 创建了 `railway.json` 配置文件
-- ✅ 创建了 `nixpacks.toml` 构建配置
-- ✅ 创建了 `Dockerfile` 作为备选方案
-- ✅ 配置了 GitHub Actions 自动部署
-
-## Railway 部署步骤
-
-### 1. 准备 Railway 账户
-1. 访问 [Railway.app](https://railway.app)
-2. 使用 GitHub 账户登录
-3. 连接你的 GitHub 仓库
-
-### 2. 创建新项目
-1. 在 Railway 控制台点击 "New Project"
-2. 选择 "Deploy from GitHub repo"
-3. 选择你的 `tinygo` 仓库
-4. 选择 "Deploy Now"
-
-### 3. 添加 PostgreSQL 数据库
-1. 在项目页面点击 "New"
-2. 选择 "Database" → "PostgreSQL"
-3. Railway 会自动创建数据库并设置 `DATABASE_URL` 环境变量
-
-### 4. 配置环境变量（可选）
-Railway 会自动设置以下环境变量：
-- `DATABASE_URL` - PostgreSQL 连接字符串
-- `PORT` - 应用端口（Railway 自动设置）
-
-你可以手动设置以下环境变量：
-- `BASE_URL` - 你的应用域名（如：https://your-app.railway.app）
-- `LOG_LEVEL` - 日志级别（默认：info）
-- `LOG_FORMAT` - 日志格式（默认：text）
-
-### 5. 部署
-Railway 会自动：
-1. 检测到 Go 项目
-2. 使用 `nixpacks.toml` 配置构建
-3. 运行 `go mod download` 下载依赖
-4. 运行 `go build -o bin/tinygo ./cmd/server` 构建应用
-5. 启动应用
-
-## GitHub Actions 自动部署
-
-### 设置 Secrets
-在 GitHub 仓库设置中添加以下 Secrets：
-1. `RAILWAY_TOKEN` - Railway API Token
-2. `RAILWAY_SERVICE` - Railway 服务名称
-
-### 获取 Railway Token
-1. 访问 [Railway Account Settings](https://railway.app/account/tokens)
-2. 点击 "Create Token"
-3. 复制生成的 token
-4. 在 GitHub 仓库设置中添加为 Secret
-
-### 自动部署流程
-- 推送到 `main` 分支时自动部署
-- 包含测试、构建和部署步骤
-- 使用 Railway CLI 进行部署
-
-## 本地开发
-
-### 使用 PostgreSQL（推荐）
+### 1. 安装 Railway CLI
 ```bash
-# 安装 PostgreSQL
-brew install postgresql  # macOS
-# 或使用 Docker
-docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+# macOS
+brew install railway
 
-# 创建数据库
-createdb tinygo
-
-# 设置环境变量
-export DATABASE_DRIVER=postgres
-export DATABASE_DSN="host=localhost user=postgres password=postgres dbname=tinygo port=5432 sslmode=disable"
-
-# 运行应用
-go run ./cmd/server
+# 或者使用 npm
+npm install -g @railway/cli
 ```
 
-### 使用 SQLite（开发）
+### 2. 登录 Railway
 ```bash
-# 设置环境变量
-export DATABASE_DRIVER=sqlite
-export DATABASE_DSN="data/tinygo.db"
-
-# 运行应用
-go run ./cmd/server
+railway login
 ```
 
-## 验证部署
+## 🚀 部署步骤
+
+### 1. 初始化 Railway 项目
+```bash
+# 在项目根目录执行
+railway init
+```
+
+### 2. 设置环境变量
+在 Railway Dashboard 中设置以下环境变量：
+
+**必需的环境变量：**
+```
+TINYGO_AUTH_USERNAME=admin
+TINYGO_AUTH_PASSWORD=your_secure_password_here
+TINYGO_BASE_URL=https://your-app-name.railway.app
+```
+
+**可选的环境变量：**
+```
+TINYGO_ADDR=:8080
+TINYGO_DATABASE_DRIVER=sqlite
+TINYGO_DATABASE_DSN=data/tinygo.db
+TINYGO_LOG_LEVEL=info
+TINYGO_LOG_FORMAT=json
+TINYGO_AUTH_SESSION_KEY=your_custom_session_key
+TINYGO_AUTH_SESSION_MAX_AGE=3600
+```
+
+### 3. 部署应用
+```bash
+# 部署到 Railway
+railway up
+
+# 或者使用 git 推送
+git add .
+git commit -m "Deploy to Railway"
+git push origin main
+```
+
+## 🔧 Railway 配置说明
+
+### 环境变量设置
+1. 登录 [Railway Dashboard](https://railway.app/dashboard)
+2. 选择你的项目
+3. 进入 "Variables" 标签页
+4. 添加所需的环境变量
+
+### 自动部署
+Railway 支持 Git 自动部署：
+- 推送到 `main` 分支会自动触发部署
+- 每次推送都会重新构建和部署应用
 
 ### 健康检查
-访问 `https://your-app.railway.app/healthz` 应该返回 "ok"
+Railway 会自动检查 `/healthz` 端点来确保应用正常运行。
 
-### API 测试
+## 🔐 安全建议
+
+### 1. 强密码
+使用强密码作为 `TINYGO_AUTH_PASSWORD`：
 ```bash
-# 创建短链接
-curl -X POST https://your-app.railway.app/api/shorten \
-  -H "Content-Type: application/json" \
-  -d '{"long_url": "https://example.com"}'
-
-# 访问短链接（应该重定向到原始URL）
-curl -I https://your-app.railway.app/abc123
+# 生成强密码
+openssl rand -base64 32
 ```
 
-## 故障排除
+### 2. 自定义会话密钥
+设置自定义的会话密钥：
+```bash
+# 生成随机会话密钥
+openssl rand -base64 32
+```
 
-### 常见问题
+### 3. HTTPS
+Railway 自动提供 HTTPS 支持，确保 `TINYGO_BASE_URL` 使用 `https://` 协议。
 
-1. **数据库连接失败**
-   - 检查 `DATABASE_URL` 环境变量
-   - 确认 PostgreSQL 服务正在运行
-
-2. **构建失败**
-   - 检查 Go 版本（需要 1.25+）
-   - 确认所有依赖都已下载
-
-3. **部署失败**
-   - 检查 Railway 日志
-   - 确认环境变量设置正确
+## 📊 监控和日志
 
 ### 查看日志
 ```bash
-# 使用 Railway CLI
+# 使用 Railway CLI 查看日志
 railway logs
 
-# 或在 Railway 控制台查看
+# 或者查看实时日志
+railway logs --follow
 ```
 
-## 项目结构
+### 监控指标
+在 Railway Dashboard 中可以查看：
+- CPU 使用率
+- 内存使用率
+- 网络流量
+- 请求数量
 
+## 🛠️ 故障排除
+
+### 常见问题
+
+1. **应用启动失败**
+   - 检查环境变量是否正确设置
+   - 查看 Railway 日志：`railway logs`
+
+2. **认证失败**
+   - 确认 `TINYGO_AUTH_USERNAME` 和 `TINYGO_AUTH_PASSWORD` 已设置
+   - 检查密码是否包含特殊字符
+
+3. **数据库问题**
+   - Railway 使用临时文件系统，重启后数据会丢失
+   - 考虑使用 Railway 的 PostgreSQL 插件进行持久化存储
+
+### 获取帮助
+- [Railway 文档](https://docs.railway.app/)
+- [Railway Discord](https://discord.gg/railway)
+- 项目 Issues: 在 GitHub 仓库中创建 Issue
+
+## 🔄 更新部署
+
+### 代码更新
+```bash
+# 提交更改
+git add .
+git commit -m "Update application"
+git push origin main
+
+# Railway 会自动部署更新
 ```
-tinygo/
-├── cmd/server/main.go          # 应用入口
-├── internal/
-│   ├── config/                # 配置管理
-│   ├── database/              # 数据库连接
-│   ├── storage/               # 数据存储层
-│   ├── shortener/             # 业务逻辑
-│   └── transport/http/        # HTTP 处理器
-├── web/                       # 前端资源
-├── railway.json               # Railway 配置
-├── nixpacks.toml             # 构建配置
-├── Dockerfile                # Docker 配置
-└── .github/workflows/        # GitHub Actions
-```
 
-## 环境变量说明
+### 环境变量更新
+在 Railway Dashboard 中更新环境变量后，应用会自动重启。
 
-| 变量名 | 描述 | 默认值 | Railway 自动设置 |
-|--------|------|--------|------------------|
-| `DATABASE_URL` | PostgreSQL 连接字符串 | - | ✅ |
-| `DATABASE_DRIVER` | 数据库驱动 | postgres | - |
-| `DATABASE_DSN` | 数据库连接字符串 | - | - |
-| `BASE_URL` | 应用基础URL | http://localhost:8080 | - |
-| `ADDR` | 监听地址 | :8080 | - |
-| `PORT` | 端口号 | 8080 | ✅ |
-| `LOG_LEVEL` | 日志级别 | info | - |
-| `LOG_FORMAT` | 日志格式 | text | - |
+## 📈 扩展和优化
 
-## 下一步
+### 数据库升级
+考虑使用 Railway 的 PostgreSQL 插件：
+1. 在 Railway Dashboard 中添加 PostgreSQL 插件
+2. 更新环境变量：
+   ```
+   TINYGO_DATABASE_DRIVER=postgres
+   TINYGO_DATABASE_DSN=${{Postgres.DATABASE_URL}}
+   ```
 
-1. 配置自定义域名（可选）
-2. 设置 SSL 证书（Railway 自动提供）
-3. 配置监控和告警
-4. 设置备份策略
+### 性能优化
+- 启用 GORM 连接池
+- 配置适当的日志级别
+- 监控内存使用情况

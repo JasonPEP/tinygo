@@ -17,6 +17,16 @@ log_format: "text"   # text, json
 
 # Database configuration
 database:
-  driver: "postgres"         # sqlite, postgres, mysql
-  dsn: "host=localhost user=postgres password=postgres dbname=tinygo port=5432 sslmode=disable"  # database connection string
+  driver: "sqlite"           # sqlite, postgres, mysql
+  dsn: "data/tinygo.db"      # database connection string
   log_level: "warn"          # gorm log level: silent, error, warn, info
+
+# Authentication configuration
+# IMPORTANT: Set these via environment variables for security!
+# export TINYGO_AUTH_USERNAME="your_username"
+# export TINYGO_AUTH_PASSWORD="your_password"
+auth:
+  username: ""               # Set via TINYGO_AUTH_USERNAME env var
+  password: ""               # Set via TINYGO_AUTH_PASSWORD env var
+  session_key: "tinygo_session"  # session cookie name
+  session_max_age: 3600      # session timeout in seconds (1 hour)

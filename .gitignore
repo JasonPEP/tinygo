@@ -31,3 +31,16 @@ data/
 # Build output
 bin/
 *.exe
+
+# Environment files (contains sensitive data)
+.env
+.env.local
+.env.production
+.env.staging
+
+# IDE files
+.vscode/
+.idea/
+
+# Railway files (keep these in git)
+# .railway/ is automatically created by Railway CLI
