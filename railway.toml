@@ -12,5 +12,5 @@ restartPolicyMaxRetries = 10
 [environments.production.variables]
 TINYGO_LOG_LEVEL = "info"
 TINYGO_LOG_FORMAT = "json"
-TINYGO_DATABASE_DRIVER = "sqlite"
-TINYGO_DATABASE_DSN = "data/tinygo.db"
+TINYGO_DATABASE_DRIVER = "postgres"
+TINYGO_DATABASE_DSN = "${{Postgres.DATABASE_URL}}"
